@@ -29,6 +29,7 @@ func NewRouter(db *store.DB) *gin.Engine {
 	v1.GET("/shops", sh.List)
 	v1.GET("/shops/:slug", sh.Get)
 
+	v1.GET("/shops/:slug/products", sh.Products) 
 	}	
   return r
 }

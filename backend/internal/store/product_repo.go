@@ -84,3 +84,58 @@ LIMIT 1`
 	}
 	return &it, nil
 }
+
+func (r *ProductRepo) ListByShopSlug(ctx context.Context, slug string, p ListParams) ([]models.Product, int, error) {
+	if p.Page <= 0 { p.Page = 1 }
+	if p.Per <= 0 || p.Per > 100 { p.Per = 20 }
+
+	base := `
+WITH s AS (SELECT id FROM shops WHERE slug = $1 AND status IN ('active','pending') LIMIT 1)
+SELECT p.id, p.shop_id, p.title, p.slug, COALESCE(p.description,''), p.price, p.stock,
+       COALESCE((SELECT i.url FROM product_images i WHERE i.product_id=p.id AND i.is_primary=true LIMIT 1),'') AS image
+FROM products p
+JOIN s ON p.shop_id = s.id
+WHERE p.status='active'`
+	args := []any{slug}
+
+	// optional search di dalam toko
+	if strings.TrimSpace(p.Search) != "" {
+		args = append(args, "%"+strings.TrimSpace(p.Search)+"%")
+		base += fmt.Sprintf(" AND (p.title ILIKE $%d OR p.slug ILIKE $%d)", len(args), len(args))
+	}
+
+	order := " ORDER BY p.id DESC"
+	switch p.Sort {
+	case "newest":
+		order = " ORDER BY p.created_at DESC"
+	case "price_asc":
+		order = " ORDER BY p.price ASC"
+	case "price_desc":
+		order = " ORDER BY p.price DESC"
+	}
+
+	// hitung total
+	countSQL := "SELECT COUNT(*) FROM (" + base + ") x"
+	var total int
+	if err := r.DB.Pool.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// paging
+	limitOffset := fmt.Sprintf(" LIMIT %d OFFSET %d", p.Per, (p.Page-1)*p.Per)
+	sql := base + order + limitOffset
+
+	rows, err := r.DB.Pool.Query(ctx, sql, args...)
+	if err != nil { return nil, 0, err }
+	defer rows.Close()
+
+	items := []models.Product{}
+	for rows.Next() {
+		var it models.Product
+		if err := rows.Scan(&it.ID, &it.ShopID, &it.Title, &it.Slug, &it.Desc, &it.Price, &it.Stock, &it.Image); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, it)
+	}
+	return items, total, nil
+}
