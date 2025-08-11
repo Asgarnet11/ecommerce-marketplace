@@ -29,7 +29,12 @@ func NewRouter(db *store.DB) *gin.Engine {
 	v1.GET("/shops", sh.List)
 	v1.GET("/shops/:slug", sh.Get)
 
-	v1.GET("/shops/:slug/products", sh.Products) 
+	v1.GET("/shops/:slug/products", sh.Products)
+	
+	// auth
+	ah := handlers.NewAuthHandler(db)
+v1.POST("/auth/register", ah.Register)
+v1.POST("/auth/login", ah.Login)
 	}	
   return r
 }
