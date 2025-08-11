@@ -1,40 +1,78 @@
 package http
 
 import (
-	"marketplace/backend/internal/handlers"
-	"marketplace/backend/internal/middleware"
-	"marketplace/backend/internal/store"
-
 	"github.com/gin-gonic/gin"
+
+	// handlers
+	"marketplace/backend/internal/handlers"
+
+	// middleware
+	"marketplace/backend/internal/middleware"
+
+	// store (untuk tipe *store.DB di NewRouter)
+	"marketplace/backend/internal/store"
 )
 
+// NewRouter men-setup seluruh route API
 func NewRouter(db *store.DB) *gin.Engine {
-  r := gin.Default()
-  r.Use(middleware.CORS())
+	r := gin.Default()
 
-  r.GET("/health", handlers.Health)
+	// --- Middleware global ---
+	r.Use(middleware.CORS())
 
-  h := handlers.NewProductHandler(db)
-  v1 := r.Group("/v1")
-  {
-    v1.GET("/products", h.ListProducts)
-    v1.GET("/products/:slug", h.GetProduct)
-  
-	ch := handlers.NewCategoryHandler(db)
-	v1.GET("/categories", ch.List)        
-	v1.GET("/categories/tree", ch.Tree)  
+	// --- Healthcheck ---
+	r.GET("/health", handlers.Health)
 
-	// shops
-	sh := handlers.NewShopHandler(db)
-	v1.GET("/shops", sh.List)
-	v1.GET("/shops/:slug", sh.Get)
+	// --- Inisialisasi handler ---
+	// public
+	authH := handlers.NewAuthHandler(db)
+	prodH := handlers.NewProductHandler(db)
+	catH  := handlers.NewCategoryHandler(db)
+	shopH := handlers.NewShopHandler(db)
 
-	v1.GET("/shops/:slug/products", sh.Products)
-	
-	// auth
-	ah := handlers.NewAuthHandler(db)
-v1.POST("/auth/register", ah.Register)
-v1.POST("/auth/login", ah.Login)
-	}	
-  return r
+	// --- Public routes (/v1) ---
+	v1 := r.Group("/v1")
+	{
+		// Auth
+		v1.POST("/auth/register", authH.Register)
+		v1.POST("/auth/login",    authH.Login)
+
+		// Products
+		v1.GET("/products",       prodH.ListProducts)
+		v1.GET("/products/:slug", prodH.GetProduct)
+
+		// Categories
+		v1.GET("/categories",       catH.List)  // flat
+		v1.GET("/categories/tree",  catH.Tree)  // nested tree
+
+		// Shops
+		v1.GET("/shops",               shopH.List)
+		v1.GET("/shops/:slug",         shopH.Get)
+		v1.GET("/shops/:slug/products", shopH.Products)
+
+		// Contoh endpoint protected sederhana (cek token)
+		v1.GET("/me", middleware.AuthRequired(), func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"user_id": c.GetInt64("user_id"),
+				"role":    c.GetString("role"),
+			})
+		})
+
+		// --- Protected group (butuh Bearer token) ---
+		auth := v1.Group("", middleware.AuthRequired())
+		{
+			// Cart
+			cartH := handlers.NewCartHandler(db)
+			auth.GET(   "/cart",        cartH.View)
+			auth.POST(  "/cart/items",  cartH.Add)
+			auth.PUT(   "/cart/items",  cartH.Update)
+			auth.DELETE("/cart/items",  cartH.Remove)
+
+			// Checkout
+			checkoutH := handlers.NewCheckoutHandler(db)
+			auth.POST("/checkout", checkoutH.Checkout)
+		}
+	}
+
+	return r
 }

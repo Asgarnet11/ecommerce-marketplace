@@ -1,18 +1,47 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Home from "../pages/Home.vue";
-import Products from "../pages/Products.vue";
-import ProductDetail from "../pages/ProductDetail.vue";
-import Cart from "../pages/Cart.vue";
-import Shops from "../pages/Shops.vue";
-import ShopDetail from "../pages/ShopDetail.vue";
+
+const Landing = () => import("../pages/Landing.vue");
+const Catalog = () => import("../pages/Catalog.vue");
+const Product = () => import("../pages/ProductDetail.vue");
+const Shops = () => import("../pages/Shops.vue");
+const ShopDetail = () => import("../pages/ShopDetail.vue");
+const Cart = () => import("../pages/Cart.vue");
+const Checkout = () => import("../pages/Checkout.vue");
+const Login = () => import("../pages/Login.vue");
+const Register = () => import("../pages/Register.vue");
 
 const routes = [
-  { path: "/", name: "home", component: Home },
-  { path: "/products", name: "products", component: Products },
-  { path: "/p/:slug", name: "product", component: ProductDetail },
+  { path: "/", name: "landing", component: Landing, meta: { public: true } },
+  {
+    path: "/products",
+    name: "catalog",
+    component: Catalog,
+    meta: { public: true },
+  },
+  {
+    path: "/p/:slug",
+    name: "product",
+    component: Product,
+    meta: { public: true },
+  },
+  { path: "/shops", name: "shops", component: Shops, meta: { public: true } },
+  {
+    path: "/shops/:slug",
+    name: "shop",
+    component: ShopDetail,
+    meta: { public: true },
+  },
   { path: "/cart", name: "cart", component: Cart },
-  { path: "/shops", name: "shops", component: Shops },
-  { path: "/shops/:slug", name: "shop", component: ShopDetail },
+  { path: "/checkout", name: "checkout", component: Checkout },
+  { path: "/login", name: "login", component: Login, meta: { public: true } },
+  {
+    path: "/register",
+    name: "register",
+    component: Register,
+    meta: { public: true },
+  },
 ];
 
-export default createRouter({ history: createWebHistory(), routes });
+const router = createRouter({ history: createWebHistory(), routes });
+
+export default router;
