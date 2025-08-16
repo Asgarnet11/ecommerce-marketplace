@@ -9,6 +9,9 @@ const Cart = () => import("../pages/Cart.vue");
 const Checkout = () => import("../pages/Checkout.vue");
 const Login = () => import("../pages/Login.vue");
 const Register = () => import("../pages/Register.vue");
+const Orders = () => import("../pages/Orders.vue");
+const OrderDetail = () => import("../pages/OrderDetail.vue");
+const Search = () => import("../pages/Search.vue");
 
 const routes = [
   { path: "/", name: "landing", component: Landing, meta: { public: true } },
@@ -38,6 +41,14 @@ const routes = [
     path: "/register",
     name: "register",
     component: Register,
+    meta: { public: true },
+  },
+  { path: "/orders", name: "orders", component: Orders },
+  { path: "/orders/:code", name: "order-detail", component: OrderDetail },
+  {
+    path: "/search",
+    name: "search",
+    component: Search,
     meta: { public: true },
   },
 ];

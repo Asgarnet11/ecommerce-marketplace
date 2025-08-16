@@ -45,6 +45,17 @@
               class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand transition-all duration-200 group-hover:w-full"
             ></span>
           </router-link>
+          <form
+            class="hidden md:flex items-center gap-2"
+            @submit.prevent="goSearch"
+          >
+            <input
+              v-model="q"
+              placeholder="Cari produk atau toko…"
+              class="border rounded-xl px-3 py-2 w-64"
+            />
+            <button class="btn">Cari</button>
+          </form>
         </nav>
 
         <!-- Desktop Auth & Cart Section -->
@@ -69,6 +80,16 @@
             </svg>
             <span
               class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            ></span>
+          </router-link>
+          <router-link
+            v-if="auth.isLogged"
+            class="text-gray-700 hover:text-brand font-medium transition-all duration-200 hover:scale-105 relative group"
+            to="/orders"
+          >
+            Pesanan
+            <span
+              class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand transition-all duration-200 group-hover:w-full"
             ></span>
           </router-link>
 
@@ -180,6 +201,17 @@
                 </svg>
                 Toko
               </router-link>
+              <form
+                class="hidden md:flex items-center gap-2"
+                @submit.prevent="goSearch"
+              >
+                <input
+                  v-model="q"
+                  placeholder="Cari produk atau toko…"
+                  class="border rounded-xl px-3 py-2 w-64"
+                />
+                <button class="btn">Cari</button>
+              </form>
               <router-link
                 class="flex items-center gap-3 p-3 text-gray-700 hover:text-brand hover:bg-gray-50 rounded-lg font-medium transition-all duration-200"
                 to="/cart"
@@ -251,13 +283,19 @@
 <script setup>
 import { ref } from "vue";
 import { useAuth } from "../stores/auth";
+import { useRouter } from "vue-router";
 
 const auth = useAuth();
 const open = ref(false);
+const router = useRouter();
 
 function logout() {
   auth.logout();
   open.value = false;
+}
+function goSearch() {
+  if (q.value.trim())
+    router.push({ name: "search", query: { q: q.value.trim() } });
 }
 </script>
 

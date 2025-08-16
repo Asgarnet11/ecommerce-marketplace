@@ -71,6 +71,16 @@ func NewRouter(db *store.DB) *gin.Engine {
 			// Checkout
 			checkoutH := handlers.NewCheckoutHandler(db)
 			auth.POST("/checkout", checkoutH.Checkout)
+
+			// Orders (buyer)
+			ordersH := handlers.NewOrdersHandler(db)
+			auth.GET("/orders", ordersH.List)
+			auth.GET("/orders/:code", ordersH.Detail)
+
+			searchH := handlers.NewSearchHandler(db)
+			v1.GET("/search", searchH.Global)
+
+
 		}
 	}
 
